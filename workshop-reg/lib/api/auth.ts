@@ -13,6 +13,7 @@ export const authAPI = {
   },
 
   login: async (data: LoginInput) => {
+    console.log('Attempting login with:', data);
     const response = await apiClient.post('/auth/login', data);
     return response.data;
   },

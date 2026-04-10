@@ -26,19 +26,14 @@ export default function LoginForm() {
     setFormError('');
 
     try {
-      // Validate
       const validated = loginSchema.parse(formData);
-
-      // Call API
       const response = await authAPI.login(validated);
-
+      console.log('Login response:', response);
       if (response.success) {
-        // Store token and user
         setToken(response.data.token);
         setUser(response.data.user);
         setLoading(false);
 
-        // Redirect
         router.push('/dashboard');
       }
     } catch (err: any) {
@@ -71,7 +66,7 @@ export default function LoginForm() {
             name="email"
             value={formData.email}
             onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+            className="text-pink-500 w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
             placeholder="you@example.com"
             required
           />
@@ -84,8 +79,8 @@ export default function LoginForm() {
             name="password"
             value={formData.password}
             onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-            placeholder="••••••••"
+            className="text-pink-500 w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition "
+            placeholder="Enter your password"
             required
           />
         </div>
@@ -93,7 +88,7 @@ export default function LoginForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold py-2 rounded-lg hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+          className="bg-green-500 w-full bg-gradient-to-r from-pink-400 to-pink-500 text-white font-bold py-2 rounded-lg hover:shadow-xl transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? (
             <span className="flex items-center justify-center gap-2">
@@ -118,7 +113,7 @@ export default function LoginForm() {
         </div>
       </div>
 
-      <button className="w-full mt-6 flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium">
+      <button className="text-pink-500 w-full mt-6 flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium">
         <svg className="w-5 h-5" viewBox="0 0 24 24">
           <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
           <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
@@ -130,7 +125,7 @@ export default function LoginForm() {
 
       <p className="mt-6 text-center text-gray-600">
         Don't have an account?{' '}
-        <Link href="/auth/register" className="text-blue-600 font-bold hover:underline">
+        <Link href="/auth/register" className="text-pink-600 font-bold hover:underline">
           Sign up
         </Link>
       </p>
