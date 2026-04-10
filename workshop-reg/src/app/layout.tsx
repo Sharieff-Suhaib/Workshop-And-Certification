@@ -1,4 +1,13 @@
-import "./globals.css";
+import type { Metadata } from 'next';
+import './globals.css';
+
+export const metadata: Metadata = {
+  title: 'Workshop & Certification Platform',
+  description: 'Register for workshops and earn certificates',
+  icons: {
+    icon: '/favicon.ico',
+  },
+};
 
 export default function RootLayout({
   children,
@@ -7,7 +16,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className="bg-gray-50">{children}</body>
     </html>
   );
 }
