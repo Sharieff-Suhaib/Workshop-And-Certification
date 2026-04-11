@@ -7,11 +7,6 @@ const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 const CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL;
 
-console.log('🔐 Passport Google Strategy Loading (With Sessions)...');
-console.log('📍 Client ID:', CLIENT_ID ? `${CLIENT_ID.substring(0, 20)}...` : 'MISSING');
-console.log('📍 Client Secret:', CLIENT_SECRET ? `${CLIENT_SECRET.substring(0, 20)}...` : 'MISSING');
-console.log('📍 Callback URL:', CALLBACK_URL);
-
 if (!CLIENT_ID || !CLIENT_SECRET) {
   console.error('❌ ERROR: Google OAuth credentials are missing in .env');
 }
@@ -55,10 +50,8 @@ passport.use(
               data: { profileImage },
             });
           }
-          console.log('✅ Existing user found:', email);
         }
 
-        // Generate JWT token
         const token = generateToken(user.id);
 
         const userData = {
@@ -79,15 +72,11 @@ passport.use(
   )
 );
 
-// Serialize user to session
 passport.serializeUser((user: any, done) => {
-  console.log('📦 Serializing user to session:', user.email);
   done(null, user);
 });
 
-// Deserialize user from session
 passport.deserializeUser((user: any, done) => {
-  console.log('📦 Deserializing user from session:', user.email);
   done(null, user);
 });
 
