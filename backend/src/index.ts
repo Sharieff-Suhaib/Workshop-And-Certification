@@ -1,16 +1,55 @@
 import express from "express";
 import { PrismaClient } from "@prisma/client";
-import authRoutes from "./routes/authRoutes";
 import cors from "cors";
+import passport from "passport";
+import './config/passport';
+import dotenv from 'dotenv';
+import authRoutes from "./routes/authRoutes";
+import oauthRoutes from "./routes/oauthRoutes";
+import { Pool } from 'pg';
+import pgSession from 'connect-pg-simple';
+import session from "express-session";
 
 
 const app = express();
-app.use(cors());
-app.use(express.json());
 export const prisma = new PrismaClient();
+const pgPool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+dotenv.config();
+const PostgresqlStore = pgSession(session);
 
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  credentials: true,
+}));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+app.use(
+  session({
+    store: new PostgresqlStore({
+      pool: pgPool,
+      tableName: 'session',
+      ttl: 24 * 60 * 60, // 24 hours
+    }),
+    secret: process.env.SESSION_SECRET || 'your_session_secret_key',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000,
+      sameSite: 'lax',
+    },
+  })
+);
+
+
+app.use(passport.initialize());
+app.use(passport.session());
 app.use("/auth", authRoutes);
+app.use('/oauth', oauthRoutes);
 
 app.get("/", (req, res) => {
   res.send("Backend running ✅");
