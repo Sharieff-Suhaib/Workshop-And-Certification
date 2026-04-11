@@ -1,19 +1,21 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export interface User {
+interface User {
   id: string;
-  email: string;
   name: string;
+  email: string;
   role: string;
+  profileImage?: string;
 }
 
 interface AuthStore {
   user: User | null;
   token: string | null;
-  isLoading: boolean;
+  loading: boolean;
   error: string | null;
-  
+
+  // Actions
   setUser: (user: User | null) => void;
   setToken: (token: string | null) => void;
   setLoading: (loading: boolean) => void;
@@ -26,21 +28,30 @@ export const useAuthStore = create<AuthStore>()(
     (set) => ({
       user: null,
       token: null,
-      isLoading: false,
+      loading: false,
       error: null,
 
       setUser: (user) => set({ user }),
       setToken: (token) => set({ token }),
-      setLoading: (loading) => set({ isLoading: loading }),
+      setLoading: (loading) => set({ loading }),
       setError: (error) => set({ error }),
-      logout: () => set({ user: null, token: null, error: null }),
+
+      // Logout action ✅
+      logout: () => {
+        set({
+          user: null,
+          token: null,
+          loading: false,
+          error: null,
+        });
+        // Clear localStorage
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('auth_user');
+      },
     }),
     {
-      name: 'auth-storage',
-      partialize: (state) => ({
-        user: state.user,
-        token: state.token,
-      }),
+      name: 'auth-store',
+      storage: typeof window !== 'undefined' ? localStorage : undefined,
     }
   )
 );
