@@ -1,12 +1,10 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import AuthProvider from '../../components/providers/AuthProvider';
 
 export const metadata: Metadata = {
-  title: 'Workshop & Certification Platform',
-  description: 'Register for workshops and earn certificates',
-  icons: {
-    icon: '/favicon.ico',
-  },
+  title: 'Workshop Certification',
+  description: 'Workshop & Certification Platform',
 };
 
 export default function RootLayout({
@@ -16,7 +14,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="bg-gray-50">{children}</body>
+      <body>
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   );
 }

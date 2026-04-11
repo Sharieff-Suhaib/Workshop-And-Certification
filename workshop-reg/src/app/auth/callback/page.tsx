@@ -16,19 +16,28 @@ export default function CallbackPage() {
     if (token && userStr) {
       try {
         const user = JSON.parse(decodeURIComponent(userStr));
-        
-        // Store token and user
+
+        console.log('✅ Storing auth data...');
+
+        // Store in Zustand (will auto-persist to localStorage)
         setToken(token);
         setUser(user);
 
+        console.log('✅ Auth data stored');
+        console.log('📦 Token:', token.substring(0, 20) + '...');
+        console.log('👤 User:', user.email);
+
         // Redirect to dashboard
-        router.push('/dashboard');
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 500);
       } catch (error) {
-        console.error('Error parsing callback:', error);
-        router.push('/auth/login?error=Authentication failed');
+        console.error('❌ Parse error:', error);
+        router.push('/auth/login?error=Invalid data');
       }
     } else {
-      router.push('/auth/login?error=No authentication data');
+      console.error('❌ No auth data in URL');
+      router.push('/auth/login?error=No auth data');
     }
   }, [searchParams, router, setUser, setToken]);
 

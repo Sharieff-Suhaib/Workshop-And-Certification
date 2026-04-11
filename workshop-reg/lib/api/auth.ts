@@ -25,7 +25,7 @@ export const authAPI = {
 
   logout: async () => {
     try {
-      const response = await apiClient.post('/auth/logout');
+      const response = await apiClient.post('/oauth/logout');
       return response.data;
     } catch (error: any) {
       throw error.response?.data || error;

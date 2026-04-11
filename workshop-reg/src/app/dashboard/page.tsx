@@ -9,23 +9,27 @@ export default function Dashboard() {
   const router = useRouter();
   const { user, token } = useAuthStore();
 
+  // ✅ Use useEffect for navigation
   useEffect(() => {
-    // Redirect if not authenticated
     if (!user || !token) {
+      console.log('❌ No user or token - redirecting to login');
       router.push('/auth/login');
     }
   }, [user, token, router]);
 
-  if (!user) {
-    return <div>Loading...</div>;
+  // Show nothing while checking auth
+  if (!user || !token) {
+    return null;
   }
+
+  console.log('✅ User authenticated:', user.email);
 
   return (
     <>
       <Navbar />
       <div className="container mx-auto p-8">
         <h1 className="text-4xl font-bold mb-8">Welcome, {user.name}! 👋</h1>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white p-6 rounded-lg shadow-md">
             <h2 className="text-2xl font-bold text-blue-600 mb-4">Workshops</h2>

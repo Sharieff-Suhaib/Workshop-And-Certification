@@ -16,20 +16,15 @@ export default function Navbar() {
     try {
       setLoading(true);
       
-      // Call backend logout
+      // Call /oauth/logout
       await authAPI.logout();
 
       console.log('✅ Logout successful');
 
-      // Clear frontend state
       logout();
-
-      // Redirect to login
       router.push('/auth/login');
     } catch (error: any) {
       console.error('Logout error:', error);
-      
-      // Even if backend fails, clear frontend state
       logout();
       router.push('/auth/login');
     } finally {
@@ -69,13 +64,11 @@ export default function Navbar() {
       </Link>
 
       <div className="flex items-center gap-4">
-        {/* User Info */}
         <div className="text-right">
           <p className="font-semibold text-gray-800">{user.name}</p>
           <p className="text-sm text-gray-600">{user.email}</p>
         </div>
 
-        {/* Profile Image */}
         {user.profileImage && (
           <img
             src={user.profileImage}
@@ -84,7 +77,6 @@ export default function Navbar() {
           />
         )}
 
-        {/* Menu */}
         <div className="relative">
           <button
             onClick={() => setShowMenu(!showMenu)}

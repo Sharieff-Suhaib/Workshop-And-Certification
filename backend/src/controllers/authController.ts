@@ -1,67 +1,165 @@
 import { Response } from 'express';
-import { asyncHandler } from '../middleware/errorHandler';
-import { sendSuccess, sendError, handleZodError } from '../utils/helpers';
-import { registerSchema } from '../validation/register'
+import type { Request } from 'express';
+import bcrypt from 'bcryptjs';
+import { sendSuccess, sendError } from '../utils/helpers';
+import { prisma } from '../index';
+import { generateToken } from '../utils/jwt';
 import { loginSchema } from '../validation/login';
-import { AuthService } from '../services/authService';
-import { AuthRequest } from '../middleware/authMiddleware';
-
+import { registerSchema } from '../validation/register';
 export class AuthController {
-  static register = asyncHandler(async (req: any, res: Response) => {
+  // ============ REGISTER ============
+  static register = async (req: Request, res: Response): Promise<void> => {
     try {
       const validated = registerSchema.parse(req.body);
 
-      const result = await AuthService.register(validated);
+      const existingUser = await prisma.user.findUnique({
+        where: { email: validated.email },
+      });
 
-      sendSuccess(res, 201, result, 'Registration successful');
-    } catch (error: any) {
-      if (error.name === 'ZodError') {
-        const errorMessage = handleZodError(error);
-        return sendError(res, 400, errorMessage, 'Validation error');
+      if (existingUser) {
+        sendError(res, 400, 'Email already registered');
+        return;
       }
-      sendError(res, 400, error.message);
-    }
-  });
 
-  static login = asyncHandler(async (req: any, res: Response) => {
+      const hashedPassword = await bcrypt.hash(validated.password, 10);
+
+      const user = await prisma.user.create({
+        data: {
+          email: validated.email,
+          name: validated.name,
+          password: hashedPassword,
+          role: 'USER',
+        },
+      });
+
+      const token = generateToken(user.id);
+
+      sendSuccess(res, 201, {
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        },
+        token,
+      });
+    } catch (error: any) {
+      if (error.errors) {
+        sendError(res, 400, error.errors[0].message);
+      } else {
+        sendError(res, 500, error.message);
+      }
+    }
+  };
+
+  // ============ LOGIN ============
+  static login = async (req: Request, res: Response): Promise<void> => {
     try {
       const validated = loginSchema.parse(req.body);
 
-      const result = await AuthService.login(validated);
+      const user = await prisma.user.findUnique({
+        where: { email: validated.email },
+      });
 
-      sendSuccess(res, 200, result, 'Login successful');
-    } catch (error: any) {
-      if (error.name === 'ZodError') {
-        const errorMessage = handleZodError(error);
-        return sendError(res, 400, errorMessage, 'Validation error');
+      if (!user) {
+        sendError(res, 401, 'Invalid email or password');
+        return;
       }
-      sendError(res, 401, error.message);
-    }
-  });
 
-  static getCurrentUser = asyncHandler(async (req: AuthRequest, res: Response) => {
+      const passwordMatch = await bcrypt.compare(
+        validated.password,
+        user.password
+      );
+
+      if (!passwordMatch) {
+        sendError(res, 401, 'Invalid email or password');
+        return;
+      }
+
+      const token = generateToken(user.id);
+
+      sendSuccess(res, 200, {
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        },
+        token,
+      });
+    } catch (error: any) {
+      if (error.errors) {
+        sendError(res, 400, error.errors[0].message);
+      } else {
+        sendError(res, 500, error.message);
+      }
+    }
+  };
+
+  // ============ GET CURRENT USER ============
+  static getCurrentUser = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.userId;
+      const userId = (req as any).user?.id;
 
       if (!userId) {
-        return sendError(res, 401, 'User not authenticated');
+        sendError(res, 401, 'Unauthorized');
+        return;
       }
 
-      const user = await AuthService.getCurrentUser(userId);
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          profileImage: true,
+        },
+      });
 
-      sendSuccess(res, 200, user);
+      if (!user) {
+        sendError(res, 404, 'User not found');
+        return;
+      }
+
+      sendSuccess(res, 200, {
+        authenticated: true,
+        user,
+      });
     } catch (error: any) {
-      sendError(res, 400, error.message);
+      sendError(res, 500, error.message);
     }
-  });
+  };
 
-  static logout = asyncHandler(async (req: AuthRequest, res: Response) => {
+  // ============ LOGOUT ============
+  static logout = (req: Request, res: Response): void => {
     try {
-      const result = await AuthService.logout();
+      req.logout((logoutErr: Error | null) => {
+        if (logoutErr) {
+          console.error('Logout error:', logoutErr);
+          sendError(res, 500, 'Logout failed');
+          return;
+        }
 
-      sendSuccess(res, 200, result, 'Logout successful');
+        if (req.session) {
+          req.session.destroy((destroyErr: Error | null) => {
+            if (destroyErr) {
+              console.error('Session destroy error:', destroyErr);
+              sendError(res, 500, 'Session destruction failed');
+              return;
+            }
+
+            res.clearCookie('connect.sid');
+            sendSuccess(res, 200, null, 'Logged out successfully');
+          });
+        } else {
+          res.clearCookie('connect.sid');
+          sendSuccess(res, 200, null, 'Logged out successfully');
+        }
+      });
     } catch (error: any) {
-      sendError(res, 400, error.message);
+      console.error('Logout error:', error);
+      sendError(res, 500, error.message);
     }
-  });
+  };
 }

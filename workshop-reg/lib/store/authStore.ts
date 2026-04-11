@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 
 interface User {
   id: string;
@@ -14,29 +14,37 @@ interface AuthStore {
   token: string | null;
   loading: boolean;
   error: string | null;
+  isHydrated: boolean;
 
-  // Actions
   setUser: (user: User | null) => void;
   setToken: (token: string | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   logout: () => void;
+  setIsHydrated: (hydrated: boolean) => void;
 }
+
+// Check if we're in browser
+const isBrowser = typeof window !== 'undefined';
 
 export const useAuthStore = create<AuthStore>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       token: null,
       loading: false,
       error: null,
+      isHydrated: !isBrowser, // Start as true on server, false on client ✅
 
       setUser: (user) => set({ user }),
       setToken: (token) => set({ token }),
       setLoading: (loading) => set({ loading }),
       setError: (error) => set({ error }),
+      setIsHydrated: (hydrated) => {
+        console.log('🔐 Setting isHydrated to:', hydrated);
+        set({ isHydrated: hydrated });
+      },
 
-      // Logout action ✅
       logout: () => {
         set({
           user: null,
@@ -44,14 +52,26 @@ export const useAuthStore = create<AuthStore>()(
           loading: false,
           error: null,
         });
-        // Clear localStorage
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('auth_user');
+        if (isBrowser) {
+          localStorage.removeItem('auth-store');
+        }
       },
     }),
     {
       name: 'auth-store',
-      storage: typeof window !== 'undefined' ? localStorage : undefined,
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        user: state.user,
+        token: state.token,
+      }),
+      onRehydrateStorage: () => (state) => {
+        console.log('📦 onRehydrateStorage called');
+        console.log('📦 Current state:', state);
+        if (state) {
+          state.setIsHydrated(true);
+          console.log('✅ Auth store rehydrated - isHydrated set to true');
+        }
+      },
     }
   )
 );

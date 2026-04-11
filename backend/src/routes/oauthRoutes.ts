@@ -1,11 +1,10 @@
 import { Router } from 'express';
 import passport from 'passport';
 import { OAuthController } from '../controllers/oauthController';
-import { authMiddleware } from '../middleware/authMiddleware';
 
 const router = Router();
 
-// Google OAuth - Initiate login
+// ✅ Google OAuth routes
 router.get(
   '/google',
   passport.authenticate('google', {
@@ -16,7 +15,6 @@ router.get(
   })
 );
 
-// Google OAuth Callback
 router.get(
   '/google/callback',
   passport.authenticate('google', {
@@ -26,13 +24,10 @@ router.get(
   OAuthController.googleCallback
 );
 
-// Failure handler
 router.get('/failure', OAuthController.googleAuthFailure);
 
-// Get current user (protected)
-router.get('/me', authMiddleware, OAuthController.getCurrentUser);
-
-// Logout (protected) - ✅ KEY ENDPOINT
-router.post('/logout', authMiddleware, OAuthController.logout);
+// ✅ These endpoints MUST exist
+router.get('/me', OAuthController.getCurrentUser);
+router.post('/logout', OAuthController.logout);
 
 export default router;
