@@ -132,6 +132,16 @@ export default function LoginForm() {
         Sign in with Google
       </button>
 
+      {/* ADMIN LOGIN BUTTON */}
+      <button
+        onClick={() => router.push('/auth/admin-login')}
+        type="button"
+        className="text-white w-full mt-4 flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 border border-purple-700 rounded-lg hover:shadow-lg transition font-medium"
+      >
+        <span>🔐</span>
+        Admin Portal
+      </button>
+
       <p className="mt-6 text-center text-gray-600">
         Don't have an account?{' '}
         <Link href="/auth/register" className="text-pink-600 font-bold hover:underline">
