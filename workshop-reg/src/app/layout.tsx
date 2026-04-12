@@ -1,10 +1,12 @@
-import type { Metadata } from 'next';
-import './globals.css';
-import AuthProvider from '../../components/providers/AuthProvider';
+import type { Metadata } from "next";
+import "./globals.css";
+
+import AuthProvider from "../../components/providers/AuthProvider";
+import ReactQueryProvider from "../../components/providers/QueryReactProvider";
 
 export const metadata: Metadata = {
-  title: 'Workshop Certification',
-  description: 'Workshop & Certification Platform',
+  title: "Workshop Certification",
+  description: "Workshop & Certification Platform",
 };
 
 export default function RootLayout({
@@ -15,7 +17,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <AuthProvider>{children}</AuthProvider>
+        <ReactQueryProvider>
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </ReactQueryProvider>
       </body>
     </html>
   );
