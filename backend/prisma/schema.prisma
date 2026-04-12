@@ -16,6 +16,7 @@ model User {
   profileImage  String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  certificates Certificate[]
 
   @@map("users")
 }
@@ -36,7 +37,32 @@ enum Role {
 }
 
 model Workshop {
-  id    String @id @default(cuid())
-  title String
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  category    String   @default("Technical")
+  date        DateTime
+  time        String
+  capacity    Int?
+  createdAt   DateTime @default(now())
+  certificates Certificate[]
+
   @@map("workshops")
+}
+
+model Certificate {
+  id              String   @id @default(cuid())
+  certificateId   String   @unique
+  url             String
+  createdAt       DateTime @default(now())
+
+  userId          String
+  workshopId      String
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workshop        Workshop @relation(fields: [workshopId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([workshopId])
+  @@map("certificates")
 }
