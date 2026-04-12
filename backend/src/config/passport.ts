@@ -1,7 +1,10 @@
+// backend/src/config/passport.ts
+import 'dotenv/config';
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { prisma } from '../index';
 import { generateToken } from '../utils/jwt';
+import { isAdminEmail } from './adminWhitelist';
 
 const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
@@ -28,6 +31,9 @@ passport.use(
           return done(new Error('Email not provided from Google'));
         }
 
+        // Determine role based on email whitelist
+        const role = isAdminEmail(email) ? 'SUPER_ADMIN' : 'USER';
+
         let user = await prisma.user.findUnique({
           where: { email },
         });
@@ -39,16 +45,25 @@ passport.use(
               name: displayName || email.split('@')[0],
               password: '',
               profileImage: profileImage || null,
-              role: 'USER',
+              role,
             },
           });
-          console.log('✅ New user created:', email);
+          console.log(`✅ New user created with role ${role}:`, email);
         } else {
           if (!user.profileImage && profileImage) {
             user = await prisma.user.update({
               where: { id: user.id },
               data: { profileImage },
             });
+          }
+
+          // Update role if email is whitelisted
+          if (user.role !== role && isAdminEmail(email)) {
+            user = await prisma.user.update({
+              where: { id: user.id },
+              data: { role },
+            });
+            console.log(`✅ User role updated to ${role}:`, email);
           }
         }
 

@@ -13,9 +13,6 @@ export default function AuthProvider({
   const setIsHydrated = useAuthStore((state) => state.setIsHydrated);
 
   useEffect(() => {
-    console.log('🔄 AuthProvider mounted');
-    console.log('📦 isHydrated:', isHydrated);
-    
     // Force hydration
     setMounted(true);
     
@@ -30,8 +27,6 @@ export default function AuthProvider({
     console.log('⏳ Not mounted yet');
     return null;
   }
-
-  console.log('✅ AuthProvider ready, rendering children');
 
   return <>{children}</>;
 }

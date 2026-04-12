@@ -41,7 +41,6 @@ export const useAuthStore = create<AuthStore>()(
       setLoading: (loading) => set({ loading }),
       setError: (error) => set({ error }),
       setIsHydrated: (hydrated) => {
-        console.log('🔐 Setting isHydrated to:', hydrated);
         set({ isHydrated: hydrated });
       },
 
@@ -65,11 +64,8 @@ export const useAuthStore = create<AuthStore>()(
         token: state.token,
       }),
       onRehydrateStorage: () => (state) => {
-        console.log('📦 onRehydrateStorage called');
-        console.log('📦 Current state:', state);
         if (state) {
           state.setIsHydrated(true);
-          console.log('✅ Auth store rehydrated - isHydrated set to true');
         }
       },
     }

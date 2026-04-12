@@ -132,6 +132,15 @@ export default function LoginForm() {
         Sign in with Google
       </button>
 
+      {/* ADMIN LOGIN BUTTON */}
+      <Link
+        href="/auth/admin-login"
+        className="text-white w-full mt-4 flex items-center justify-center gap-2 px-4 py-2 bg-pink-500 border border-pink-600 rounded-lg hover:shadow-lg transition font-medium"
+      >
+        <span>🔐</span>
+        Admin Portal
+      </Link>
+
       <p className="mt-6 text-center text-gray-600">
         Don't have an account?{' '}
         <Link href="/auth/register" className="text-pink-600 font-bold hover:underline">
