@@ -125,4 +125,140 @@ export class AdminController {
       sendError(res, 500, error.message);
     }
   };
+
+  // ============ GET ALL WORKSHOPS ============
+  static getWorkshops = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const workshops = await prisma.workshop.findMany({
+        orderBy: { title: 'asc' },
+      });
+
+      const normalized = workshops.map((workshop) => ({
+        id: workshop.id,
+        title: workshop.title,
+        description: null,
+        date: null,
+        time: null,
+        location: null,
+        capacity: null,
+        registrations: 0,
+        createdAt: new Date().toISOString(),
+      }));
+
+      sendSuccess(res, 200, { workshops: normalized });
+    } catch (error: any) {
+      console.error('❌ Get workshops error:', error);
+      sendError(res, 500, error.message);
+    }
+  };
+
+  // ============ CREATE WORKSHOP ============
+  static createWorkshop = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { title } = req.body;
+
+      if (!title || typeof title !== 'string' || !title.trim()) {
+        sendError(res, 400, 'Workshop title is required');
+        return;
+      }
+
+      const workshop = await prisma.workshop.create({
+        data: {
+          title: title.trim(),
+        },
+      });
+
+      sendSuccess(
+        res,
+        201,
+        {
+          workshop: {
+            id: workshop.id,
+            title: workshop.title,
+            description: null,
+            date: null,
+            time: null,
+            location: null,
+            capacity: null,
+            registrations: 0,
+            createdAt: new Date().toISOString(),
+          },
+        },
+        'Workshop created successfully'
+      );
+    } catch (error: any) {
+      console.error('❌ Create workshop error:', error);
+      sendError(res, 500, error.message);
+    }
+  };
+
+  // ============ UPDATE WORKSHOP ============
+  static updateWorkshop = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const workshopId = Array.isArray(req.params.workshopId)
+        ? req.params.workshopId[0]
+        : req.params.workshopId;
+      const { title } = req.body;
+
+      if (!workshopId) {
+        sendError(res, 400, 'Workshop ID is required');
+        return;
+      }
+
+      if (!title || typeof title !== 'string' || !title.trim()) {
+        sendError(res, 400, 'Workshop title is required');
+        return;
+      }
+
+      const workshop = await prisma.workshop.update({
+        where: { id: workshopId },
+        data: { title: title.trim() },
+      });
+
+      sendSuccess(
+        res,
+        200,
+        {
+          workshop: {
+            id: workshop.id,
+            title: workshop.title,
+            description: null,
+            date: null,
+            time: null,
+            location: null,
+            capacity: null,
+            registrations: 0,
+            createdAt: new Date().toISOString(),
+          },
+        },
+        'Workshop updated successfully'
+      );
+    } catch (error: any) {
+      console.error('❌ Update workshop error:', error);
+      sendError(res, 500, error.message);
+    }
+  };
+
+  // ============ DELETE WORKSHOP ============
+  static deleteWorkshop = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const workshopId = Array.isArray(req.params.workshopId)
+        ? req.params.workshopId[0]
+        : req.params.workshopId;
+
+      if (!workshopId) {
+        sendError(res, 400, 'Workshop ID is required');
+        return;
+      }
+
+      await prisma.workshop.delete({
+        where: { id: workshopId },
+      });
+
+      sendSuccess(res, 200, null, 'Workshop deleted successfully');
+    } catch (error: any) {
+      console.error('❌ Delete workshop error:', error);
+      sendError(res, 500, error.message);
+    }
+  };
 }

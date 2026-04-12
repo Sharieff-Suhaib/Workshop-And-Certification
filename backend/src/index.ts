@@ -6,6 +6,7 @@ import './config/passport';
 import dotenv from 'dotenv';
 import authRoutes from "./routes/authRoutes";
 import oauthRoutes from "./routes/oauthRoutes";
+import adminRoutes from "./routes/adminRoutes";
 import { Pool } from 'pg';
 import pgSession from 'connect-pg-simple';
 import session from "express-session";
@@ -50,6 +51,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 app.use("/auth", authRoutes);
 app.use('/oauth', oauthRoutes);
+app.use('/admin', adminRoutes);
 
 app.get("/", (req, res) => {
   res.send("Backend running ✅");
