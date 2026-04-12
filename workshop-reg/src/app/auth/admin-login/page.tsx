@@ -3,23 +3,17 @@
 'use client';
 
 import { useAdminAuthStore } from '../../../../lib/store/adminAuthStore';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { AdminLoginForm } from '../../../../components/auth/AdminLoginForm';
 
 export default function AdminLoginPage() {
-  const router = useRouter();
-  const { isAuthenticated, user } = useAdminAuthStore();
+  const { logout } = useAdminAuthStore();
   const searchParams = useSearchParams();
   const error = searchParams.get('error');
 
-  useEffect(() => {
-    // If already authenticated as admin, redirect to dashboard
-    if (isAuthenticated && user?.role === 'SUPER_ADMIN' || user?.role === 'MODERATOR') {
-      router.push('/admin/dashboard');
-    }
-  }, [isAuthenticated, user, router]);
+  const handleResetSession = () => {
+    logout();
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
@@ -31,6 +25,13 @@ export default function AdminLoginPage() {
             <p className="text-red-300 text-xs mt-1">
               {decodeURIComponent(error)}
             </p>
+            <button
+              type="button"
+              onClick={handleResetSession}
+              className="mt-3 text-xs text-blue-300 hover:text-blue-200"
+            >
+              Clear admin session and try again
+            </button>
           </div>
         </div>
       )}

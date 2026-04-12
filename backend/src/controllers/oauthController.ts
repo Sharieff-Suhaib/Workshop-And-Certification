@@ -8,16 +8,30 @@ export class OAuthController {
   static googleCallback = (req: Request, res: Response): void => {
     try {
       const user = req.user;
+      const isAdminLogin =
+        req.query.state === 'admin_login' ||
+        (req.session as any)?.oauthPurpose === 'admin';
+
+      if (req.session) {
+        (req.session as any).oauthPurpose = undefined;
+      }
 
       if (!user || !user.token) {
+        const errorPath = isAdminLogin ? '/auth/admin-login' : '/auth/login';
+        res.redirect(`http://localhost:3000${errorPath}?error=Authentication failed`);
+        return;
+      }
+
+      if (isAdminLogin && user.role !== 'SUPER_ADMIN' && user.role !== 'MODERATOR') {
         res.redirect(
-          `http://localhost:3000/auth/login?error=Authentication failed`
+          `http://localhost:3000/auth/admin-login?error=Insufficient+permissions.+Only+selected+emails+can+access+the+admin+panel.`
         );
         return;
       }
 
       const frontendURL = process.env.FRONTEND_URL || 'http://localhost:3000';
-      const redirectURL = `${frontendURL}/auth/callback?token=${encodeURIComponent(
+      const callbackPath = isAdminLogin ? '/auth/admin-callback' : '/auth/callback';
+      const redirectURL = `${frontendURL}${callbackPath}?token=${encodeURIComponent(
         user.token
       )}&user=${encodeURIComponent(
         JSON.stringify({
@@ -27,22 +41,25 @@ export class OAuthController {
           role: user.role,
           profileImage: user.profileImage,
         })
-      )}`;
+      )}${isAdminLogin ? '&admin=true' : ''}`;
 
       res.redirect(redirectURL);
     } catch (error: any) {
       console.error('OAuth callback error:', error);
-      res.redirect(
-        `http://localhost:3000/auth/login?error=Authentication error`
-      );
+      const errorPath = (req.session as any)?.oauthPurpose === 'admin' ? '/auth/admin-login' : '/auth/login';
+      res.redirect(`http://localhost:3000${errorPath}?error=Authentication error`);
     }
   };
 
   // ============ GOOGLE AUTH FAILURE ============
   static googleAuthFailure = (req: Request, res: Response): void => {
     console.error('❌ Google authentication failed');
+    const isAdminLogin =
+      req.query.state === 'admin_login' ||
+      (req.session as any)?.oauthPurpose === 'admin';
+    const errorPath = isAdminLogin ? '/auth/admin-login' : '/auth/login';
     res.redirect(
-      `http://localhost:3000/auth/login?error=Google authentication failed`
+      `http://localhost:3000${errorPath}?error=Google authentication failed`
     );
   };
 
