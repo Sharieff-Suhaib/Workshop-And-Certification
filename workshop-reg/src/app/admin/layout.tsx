@@ -5,8 +5,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAdminAuthStore } from '../../../lib/store/adminAuthStore';
-import { ProtectedRoute } from '../../../components/ProtectedRoute';
-import { AdminSidebar } from '../../../components/admin/AdminSidebar';
+import { ProtectedRoute } from '../../../components/AdminProtectedRoute';
 
 export default function AdminLayout({
   children,
@@ -33,11 +32,8 @@ export default function AdminLayout({
 
   return (
     <ProtectedRoute requiredRoles={['SUPER_ADMIN', 'MODERATOR']}>
-      <div className="flex bg-slate-900 min-h-screen">
-        <AdminSidebar />
-        <main className="flex-1 ml-64 p-8">
-          <div className="max-w-7xl">{children}</div>
-        </main>
+      <div className="min-h-screen bg-slate-900 px-6 py-10 text-white">
+        <div className="mx-auto max-w-5xl">{children}</div>
       </div>
     </ProtectedRoute>
   );

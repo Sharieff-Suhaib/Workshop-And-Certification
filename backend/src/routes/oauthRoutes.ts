@@ -11,14 +11,30 @@ router.get(
     scope: ['profile', 'email'],
     accessType: 'offline',
     prompt: 'consent',
+    failureRedirect: '/oauth/failure',
     session: true,
   })
 );
 
+router.get('/google/admin', (req, res, next) => {
+  if (req.session) {
+    (req.session as any).oauthPurpose = 'admin';
+  }
+
+  passport.authenticate('google', {
+    scope: ['profile', 'email'],
+    accessType: 'offline',
+    prompt: 'consent',
+    state: 'admin_login',
+    failureRedirect: '/oauth/failure',
+    session: true,
+  })(req, res, next);
+});
+
 router.get(
   '/google/callback',
   passport.authenticate('google', {
-    failureRedirect: '/auth/failure',
+    failureRedirect: '/oauth/failure',
     session: true,
   }),
   OAuthController.googleCallback

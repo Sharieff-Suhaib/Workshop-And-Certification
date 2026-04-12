@@ -3,19 +3,15 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAdminAuthStore } from '../../lib/store/adminAuthStore';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 export function AdminLoginForm() {
-  const router = useRouter();
-  const { setAdminData } = useAdminAuthStore();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleGoogleLogin = () => {
     setIsLoading(true);
-    window.location.href = `${API_BASE}/oauth/google?admin=true`;
+    window.location.href = `${API_BASE}/oauth/google/admin`;
   };
 
   return (

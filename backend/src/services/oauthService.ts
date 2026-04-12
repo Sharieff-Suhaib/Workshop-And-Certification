@@ -1,5 +1,7 @@
+// backend/src/services/oauthService.ts
 import { prisma } from '../index';
 import { generateToken } from '../utils/jwt';
+import { isAdminEmail } from '../config/adminWhitelist';
 
 export class OAuthService {
   // ============ GOOGLE CALLBACK SERVICE ============
@@ -18,6 +20,9 @@ export class OAuthService {
         where: { email },
       });
 
+      // Determine role based on email whitelist
+      const role = isAdminEmail(email) ? 'SUPER_ADMIN' : 'USER';
+
       // If user doesn't exist, create one
       if (!user) {
         user = await prisma.user.create({
@@ -26,9 +31,10 @@ export class OAuthService {
             name: displayName || email.split('@')[0],
             password: '', // OAuth users don't have password
             profileImage: profileImage || null,
-            role: 'USER',
+            role,
           },
         });
+        console.log(`✅ New user created with role ${role}:`, email);
       } else {
         // Update profile image if not set
         if (!user.profileImage && profileImage) {
@@ -36,6 +42,15 @@ export class OAuthService {
             where: { id: user.id },
             data: { profileImage },
           });
+        }
+
+        // Update role if email is now whitelisted
+        if (user.role !== role && isAdminEmail(email)) {
+          user = await prisma.user.update({
+            where: { id: user.id },
+            data: { role },
+          });
+          console.log(`✅ User role updated to ${role}:`, email);
         }
       }
 
@@ -53,6 +68,7 @@ export class OAuthService {
         token,
       };
     } catch (error) {
+      console.error('❌ OAuth Service Error:', error);
       throw error;
     }
   }
