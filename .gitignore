@@ -1,0 +1,35 @@
+# Dependencies
+**/node_modules/
+
+# Next.js
+**/.next/
+**/out/
+**/next-env.d.ts
+
+# TypeScript / build output
+**/dist/
+**/build/
+**/*.tsbuildinfo
+
+# Environment files
+.env
+.env.*
+**/.env
+**/.env.*
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Tooling / editors
+**/.idea/
+.vercel/
+**/.vercel/
+
+# OS files
+.DS_Store
+
+# Misc
+*.pem
