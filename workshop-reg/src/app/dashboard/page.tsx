@@ -93,9 +93,9 @@ export default function DashboardPage() {
             style={{ background: '#111115', border: '1px solid #1e1e24' }}
           >
             {/* Avatar — profile picture if available, else initials */}
-            {user.avatar ? (
+            {user.profileImage ? (
               <img
-                src={user.avatar}
+                src={user.profileImage}
                 alt={user.name}
                 className="rounded-full object-cover flex-shrink-0"
                 style={{ width: '38px', height: '38px' }}
