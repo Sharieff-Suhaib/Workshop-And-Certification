@@ -2,8 +2,9 @@ import express from "express";
 import { PrismaClient } from "@prisma/client";
 import cors from "cors";
 import passport from "passport";
-import './config/passport';
 import dotenv from 'dotenv';
+dotenv.config();
+import './config/passport';
 import authRoutes from "./routes/authRoutes";
 import oauthRoutes from "./routes/oauthRoutes";
 import adminRoutes from "./routes/adminRoutes";
@@ -13,12 +14,12 @@ import session from "express-session";
 import registrationRoutes from "./routes/registrationRoutes";
 
 
+
 const app = express();
 export const prisma = new PrismaClient();
 const pgPool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
-dotenv.config();
 const PostgresqlStore = pgSession(session);
 
 app.use(cors({
