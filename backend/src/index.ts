@@ -10,7 +10,8 @@ import adminRoutes from "./routes/adminRoutes";
 import { Pool } from 'pg';
 import pgSession from 'connect-pg-simple';
 import session from "express-session";
-
+import registrationRoutes from "./routes/registrationRoutes";
+import workshopRoutes from "./routes/workshopRoutes";
 
 const app = express();
 export const prisma = new PrismaClient();
@@ -52,7 +53,8 @@ app.use(passport.session());
 app.use("/auth", authRoutes);
 app.use('/oauth', oauthRoutes);
 app.use('/admin', adminRoutes);
-
+app.use('/registrations', registrationRoutes);
+app.use('/api/workshops', workshopRoutes);
 app.get("/", (req, res) => {
   res.send("Backend running ✅");
 });

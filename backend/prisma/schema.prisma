@@ -16,7 +16,8 @@ model User {
   profileImage  String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
-
+  registrations Registration[]
+  workshopRegistrations WorkshopRegistration[]
   @@map("users")
 }
 
@@ -36,7 +37,60 @@ enum Role {
 }
 
 model Workshop {
-  id    String @id @default(cuid())
-  title String
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  category    String   @default("Technical")
+  date        DateTime
+  time        String
+  location    String? 
+  capacity    Int?
+  createdAt   DateTime @default(now())
+  registrations Registration[]
+  workshopRegistrations WorkshopRegistration[]
   @@map("workshops")
+}
+
+model Registration {
+  id              String   @id @default(cuid())
+  certificateId   String   @unique
+  url             String
+  status          String   @default("PENDING")
+  createdAt       DateTime @default(now())
+
+  userId          String
+  workshopId      String
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workshop        Workshop @relation(fields: [workshopId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([workshopId])
+  @@map("registrations")
+}
+
+//npx prisma migrate dev --name add_workshop_registration
+model WorkshopRegistration {
+  id          String   @id @default(cuid())
+  userId      String
+  workshopId  String
+
+  fullName    String
+  email       String
+  phone       String
+  college     String
+  department  String
+  year        String
+  experience  String?
+
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workshop    Workshop @relation(fields: [workshopId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, workshopId])
+  @@index([userId])
+  @@index([workshopId])
+
+  @@map("workshop_registrations")
 }

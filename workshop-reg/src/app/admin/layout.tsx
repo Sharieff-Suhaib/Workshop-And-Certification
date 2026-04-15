@@ -1,7 +1,7 @@
 // workshop-reg/src/app/admin/layout.tsx
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAdminAuthStore } from '../../../lib/store/adminAuthStore';
@@ -17,10 +17,13 @@ export default function AdminLayout({
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Redirect if not authenticated
-  if (!token || !user) {
-    router.push('/auth/admin-login');
-    return null;
-  }
+  useEffect(() => {
+    if (!token || !user) {
+      router.push('/auth/admin-login'); // ✅ called after render
+    }
+  }, [token, user, router]);
+
+if (!token || !user) return null; // still blocks rendering children
 
   const handleLogout = () => {
     logout();
