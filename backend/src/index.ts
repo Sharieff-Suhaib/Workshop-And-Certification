@@ -10,6 +10,7 @@ import adminRoutes from "./routes/adminRoutes";
 import { Pool } from 'pg';
 import pgSession from 'connect-pg-simple';
 import session from "express-session";
+import registrationRoutes from "./routes/registrationRoutes";
 
 
 const app = express();
@@ -52,6 +53,7 @@ app.use(passport.session());
 app.use("/auth", authRoutes);
 app.use('/oauth', oauthRoutes);
 app.use('/admin', adminRoutes);
+app.use('/registrations', registrationRoutes);
 
 app.get("/", (req, res) => {
   res.send("Backend running ✅");

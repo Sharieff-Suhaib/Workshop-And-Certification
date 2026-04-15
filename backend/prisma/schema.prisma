@@ -16,7 +16,7 @@ model User {
   profileImage  String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
-  certificates Certificate[]
+  registrations Registration[]
 
   @@map("users")
 }
@@ -46,15 +46,16 @@ model Workshop {
   location    String? 
   capacity    Int?
   createdAt   DateTime @default(now())
-  certificates Certificate[]
+  registrations Registration[]
 
   @@map("workshops")
 }
 
-model Certificate {
+model Registration {
   id              String   @id @default(cuid())
   certificateId   String   @unique
   url             String
+  status          String   @default("PENDING")
   createdAt       DateTime @default(now())
 
   userId          String
@@ -65,5 +66,5 @@ model Certificate {
 
   @@index([userId])
   @@index([workshopId])
-  @@map("certificates")
+  @@map("registrations")
 }
