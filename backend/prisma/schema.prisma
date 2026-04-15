@@ -54,7 +54,7 @@ model Workshop {
 model Registration {
   id              String   @id @default(cuid())
   certificateId   String   @unique
-  url             String
+  url             String?
   status          String   @default("PENDING")
   createdAt       DateTime @default(now())
 

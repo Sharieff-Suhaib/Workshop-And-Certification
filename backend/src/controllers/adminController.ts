@@ -1,25 +1,18 @@
-// backend/src/controllers/adminController.ts
-import { Response } from 'express';
-import type { Request } from 'express';
+import { Response, Request } from 'express';
 import { sendSuccess, sendError } from '../utils/helpers';
-import { prisma } from '../index';
+import { AdminService } from '../services/adminService';
 
 export class AdminController {
   // ============ GET DASHBOARD ============
   static getDashboard = async (req: Request, res: Response): Promise<void> => {
     try {
-      const totalUsers = await prisma.user.count();
-      const adminUsers = await prisma.user.count({
-        where: { role: 'SUPER_ADMIN' },
-      });
+      console.log('🎮 Controller: Getting dashboard');
 
-      sendSuccess(res, 200, {
-        totalUsers,
-        adminUsers,
-        message: 'Dashboard data retrieved successfully',
-      });
+      const data = await AdminService.getDashboardData();
+
+      sendSuccess(res, 200, data);
     } catch (error: any) {
-      console.error('❌ Get dashboard error:', error);
+      console.error('❌ Controller: Get dashboard error:', error);
       sendError(res, 500, error.message);
     }
   };
@@ -27,24 +20,13 @@ export class AdminController {
   // ============ GET ALL USERS ============
   static getAllUsers = async (req: Request, res: Response): Promise<void> => {
     try {
-      const users = await prisma.user.findMany({
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          role: true,
-          profileImage: true,
-          createdAt: true,
-        },
-        orderBy: { createdAt: 'desc' },
-      });
+      console.log('🎮 Controller: Getting all users');
 
-      sendSuccess(res, 200, {
-        users,
-        total: users.length,
-      });
+      const data = await AdminService.getAllUsers();
+
+      sendSuccess(res, 200, data);
     } catch (error: any) {
-      console.error('❌ Get all users error:', error);
+      console.error('❌ Controller: Get all users error:', error);
       sendError(res, 500, error.message);
     }
   };
@@ -57,33 +39,14 @@ export class AdminController {
         : req.params.userId;
       const { role } = req.body;
 
-      if (!userId) {
-        sendError(res, 400, 'User ID is required');
-        return;
-      }
+      console.log('🎮 Controller: Updating user role for userId:', userId);
 
-      if (!['USER', 'MODERATOR', 'SUPER_ADMIN'].includes(role)) {
-        sendError(res, 400, 'Invalid role');
-        return;
-      }
+      const data = await AdminService.updateUserRole(userId, role);
 
-      const user = await prisma.user.update({
-        where: { id: userId },
-        data: { role },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          role: true,
-        },
-      });
-
-      console.log(`✅ User role updated:`, user.email, 'to', role);
-
-      sendSuccess(res, 200, { user, message: 'User role updated successfully' });
+      sendSuccess(res, 200, data);
     } catch (error: any) {
-      console.error('❌ Update user role error:', error);
-      sendError(res, 500, error.message);
+      console.error('❌ Controller: Update user role error:', error);
+      sendError(res, 400, error.message);
     }
   };
 
@@ -94,34 +57,27 @@ export class AdminController {
         ? req.params.userId[0]
         : req.params.userId;
 
-      if (!userId) {
-        sendError(res, 400, 'User ID is required');
-        return;
-      }
+      console.log('🎮 Controller: Deleting user:', userId);
 
-      const user = await prisma.user.delete({
-        where: { id: userId },
-        select: { email: true, name: true },
-      });
+      const data = await AdminService.deleteUser(userId);
 
-      console.log(`✅ User deleted:`, user.email);
-
-      sendSuccess(res, 200, { message: 'User deleted successfully' });
+      sendSuccess(res, 200, data);
     } catch (error: any) {
-      console.error('❌ Delete user error:', error);
-      sendError(res, 500, error.message);
+      console.error('❌ Controller: Delete user error:', error);
+      sendError(res, 400, error.message);
     }
   };
 
   // ============ GET LOGS ============
   static getLogs = async (req: Request, res: Response): Promise<void> => {
     try {
-      sendSuccess(res, 200, {
-        message: 'Logs retrieved successfully',
-        logs: [],
-      });
+      console.log('🎮 Controller: Getting logs');
+
+      const data = await AdminService.getLogs();
+
+      sendSuccess(res, 200, data);
     } catch (error: any) {
-      console.error('❌ Get logs error:', error);
+      console.error('❌ Controller: Get logs error:', error);
       sendError(res, 500, error.message);
     }
   };
@@ -129,13 +85,13 @@ export class AdminController {
   // ============ GET ALL WORKSHOPS ============
   static getWorkshops = async (req: Request, res: Response): Promise<void> => {
     try {
-      const workshops = await prisma.workshop.findMany({
-        orderBy: { createdAt: 'desc' },
-      });
+      console.log('🎮 Controller: Getting all workshops');
 
-      sendSuccess(res, 200, { workshops, total: workshops.length });
+      const data = await AdminService.getWorkshops();
+
+      sendSuccess(res, 200, data);
     } catch (error: any) {
-      console.error('❌ Get workshops error:', error);
+      console.error('❌ Controller: Get workshops error:', error);
       sendError(res, 500, error.message);
     }
   };
@@ -145,37 +101,22 @@ export class AdminController {
     try {
       const { title, description, category, date, time, location, capacity } = req.body;
 
-      if (!title || typeof title !== 'string' || !title.trim()) {
-        sendError(res, 400, 'Workshop title is required');
-        return;
-      }
+      console.log('🎮 Controller: Creating workshop:', title);
 
-      if (!date) {
-        sendError(res, 400, 'Workshop date is required');
-        return;
-      }
-
-      if (!time) {
-        sendError(res, 400, 'Workshop time is required');
-        return;
-      }
-
-      const workshop = await prisma.workshop.create({
-        data: {
-          title: title.trim(),
-          description: description || null,
-          category: category || 'Technical',
-          date: new Date(`${date}T${time}:00`),
-          time: time,                               // ✅ pass time separately
-          location: location || null,
-          capacity: capacity ? parseInt(capacity) : null,
-        },
-      });
+      const workshop = await AdminService.createWorkshop(
+        title,
+        description,
+        category,
+        date,
+        time,
+        location,
+        capacity
+      );
 
       sendSuccess(res, 201, { workshop }, 'Workshop created successfully');
     } catch (error: any) {
-      console.error('❌ Create workshop error:', error);
-      sendError(res, 500, error.message);
+      console.error('❌ Controller: Create workshop error:', error);
+      sendError(res, 400, error.message);
     }
   };
 
@@ -187,38 +128,23 @@ export class AdminController {
         : req.params.workshopId;
       const { title, description, category, date, time, location, capacity } = req.body;
 
-      if (!workshopId) {
-        sendError(res, 400, 'Workshop ID is required');
-        return;
-      }
+      console.log('🎮 Controller: Updating workshop:', workshopId);
 
-      if (!title || typeof title !== 'string' || !title.trim()) {
-        sendError(res, 400, 'Workshop title is required');
-        return;
-      }
-
-      if (!time) {
-        sendError(res, 400, 'Workshop time is required');
-        return;
-      }
-
-      const workshop = await prisma.workshop.update({
-        where: { id: workshopId },
-        data: {
-          title: title.trim(),
-          description: description || null,
-          category: category || 'Technical',
-          date: new Date(`${date}T${time}:00`),
-          time: time,                               // ✅ pass time separately
-          location: location || null,
-          capacity: capacity ? parseInt(capacity) : null,
-        },
-      });
+      const workshop = await AdminService.updateWorkshop(
+        workshopId,
+        title,
+        description,
+        category,
+        date,
+        time,
+        location,
+        capacity
+      );
 
       sendSuccess(res, 200, { workshop }, 'Workshop updated successfully');
     } catch (error: any) {
-      console.error('❌ Update workshop error:', error);
-      sendError(res, 500, error.message);
+      console.error('❌ Controller: Update workshop error:', error);
+      sendError(res, 400, error.message);
     }
   };
 
@@ -229,19 +155,14 @@ export class AdminController {
         ? req.params.workshopId[0]
         : req.params.workshopId;
 
-      if (!workshopId) {
-        sendError(res, 400, 'Workshop ID is required');
-        return;
-      }
+      console.log('🎮 Controller: Deleting workshop:', workshopId);
 
-      await prisma.workshop.delete({
-        where: { id: workshopId },
-      });
+      const data = await AdminService.deleteWorkshop(workshopId);
 
-      sendSuccess(res, 200, null, 'Workshop deleted successfully');
+      sendSuccess(res, 200, data);
     } catch (error: any) {
-      console.error('❌ Delete workshop error:', error);
-      sendError(res, 500, error.message);
+      console.error('❌ Controller: Delete workshop error:', error);
+      sendError(res, 400, error.message);
     }
   };
 }

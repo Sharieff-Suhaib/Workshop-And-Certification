@@ -7,15 +7,16 @@ import { StatCard } from '../../../components/dashboard/StatCard';
 import { StatusBadge } from '../../../components/dashboard/StatusBadge';
 import { CategoryBadge } from '../../../components/dashboard/CategoryBadge';
 
-const MOCK_WORKSHOPS = [
-  { id: '1', title: 'Full-Stack Development with Next.js', category: 'Technical',     date: '2026-04-05', time: '10:00 AM', status: 'Certified',  certificateId: 'CERT-2026-0041' },
-  { id: '2', title: 'UI/UX Design Fundamentals',          category: 'Non-Technical', date: '2026-04-10', time: '2:00 PM',  status: 'Attended',   certificateId: null },
-  { id: '3', title: 'Cloud Architecture on Azure',        category: 'Technical',     date: '2026-04-18', time: '11:00 AM', status: 'Registered', certificateId: null },
-  { id: '4', title: 'Leadership & Team Dynamics',         category: 'Non-Technical', date: '2026-04-22', time: '3:00 PM',  status: 'Registered', certificateId: null },
-  { id: '5', title: 'DevOps & CI/CD Pipelines',          category: 'Technical',     date: '2026-03-28', time: '9:00 AM',  status: 'Certified',  certificateId: 'CERT-2026-0029' },
-];
+interface Workshop {
+  id: string;
+  title: string;
+  category: string;
+  date: string;
+  time: string;
+  status: 'Certified' | 'Attended' | 'Registered';
+  certificateId: string | null;
+}
 
-// Derives initials from a full name — "Kula Sekaran" → "KS"
 function getInitials(name: string): string {
   return name
     .trim()
@@ -29,15 +30,83 @@ export default function DashboardPage() {
   const router = useRouter();
   const { user, token, logout } = useAuthStore();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [statusFilter,   setStatusFilter]   = useState('All');
+  const [statusFilter, setStatusFilter] = useState('All');
   const [categoryFilter, setCategoryFilter] = useState('All');
-  const [activeTab,      setActiveTab]      = useState<'workshops' | 'certificates'>('workshops');
+  const [activeTab, setActiveTab] = useState<'workshops' | 'certificates'>('workshops');
+  const [workshops, setWorkshops] = useState<Workshop[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [stats, setStats] = useState({
+    totalRegistered: 0,
+    attended: 0,
+    upcoming: 0,
+    certificates: 0,
+  });
 
   useEffect(() => {
     if (!user || !token) {
       router.push('/auth/login');
     }
   }, [user, token, router]);
+
+  // Fetch dashboard data from backend
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      if (!token) {
+        setError('No token found');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+
+        console.log('🔄 Fetching dashboard data with token:', token.substring(0, 20) + '...');
+
+        const response = await fetch('http://localhost:5000/user/dashboard', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+        });
+
+        console.log('📡 Response status:', response.status);
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          console.error('❌ API Error:', errorData);
+          throw new Error(
+            errorData.error || errorData.message || `HTTP ${response.status}: ${response.statusText}`
+          );
+        }
+
+        const data = await response.json();
+        console.log('✅ Dashboard data received:', data);
+
+        if (data.success) {
+          setWorkshops(data.data.workshops || []);
+          setStats(data.data.stats || {
+            totalRegistered: 0,
+            attended: 0,
+            upcoming: 0,
+            certificates: 0,
+          });
+        } else {
+          throw new Error(data.error || 'Failed to fetch dashboard data');
+        }
+      } catch (error: any) {
+        console.error('❌ Error fetching dashboard data:', error);
+        setError(error.message || 'Failed to fetch dashboard data. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, [token]);
 
   const handleLogout = () => {
     logout();
@@ -47,12 +116,46 @@ export default function DashboardPage() {
 
   if (!user || !token) return null;
 
-  const certified  = MOCK_WORKSHOPS.filter((w) => w.status === 'Certified');
-  const attended   = MOCK_WORKSHOPS.filter((w) => w.status === 'Attended').length;
-  const registered = MOCK_WORKSHOPS.filter((w) => w.status === 'Registered').length;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-pink-500 mx-auto mb-4"></div>
+          <div className="text-white text-lg">Loading dashboard...</div>
+        </div>
+      </div>
+    );
+  }
 
-  const filtered = MOCK_WORKSHOPS.filter((w) => {
-    const matchStatus   = statusFilter   === 'All' || w.status   === statusFilter;
+  if (error) {
+    return (
+      <div className="flex flex-col gap-8">
+        <div className="rounded-lg p-6 bg-red-900/20 border border-red-500/50">
+          <h2 className="text-red-400 font-bold mb-2">Error Loading Dashboard</h2>
+          <p className="text-red-300 text-sm mb-4">{error}</p>
+          <div className="text-xs text-red-200 bg-red-900/10 p-3 rounded font-mono overflow-auto max-h-32">
+            <p>🔍 Troubleshooting tips:</p>
+            <ul className="list-disc list-inside mt-2">
+              <li>Ensure backend is running on http://localhost:5000</li>
+              <li>Check that you're logged in</li>
+              <li>Verify your token is valid</li>
+              <li>Check browser console for more details</li>
+            </ul>
+          </div>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-red-500 text-white rounded text-sm font-medium hover:bg-red-600"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const certified = workshops.filter((w) => w.certificateId !== null);
+  const filtered = workshops.filter((w) => {
+    const matchStatus = statusFilter === 'All' || w.status === statusFilter;
     const matchCategory = categoryFilter === 'All' || w.category === categoryFilter;
     return matchStatus && matchCategory;
   });
@@ -62,9 +165,9 @@ export default function DashboardPage() {
     borderRadius: '6px',
     fontSize: '12px',
     fontWeight: 500,
-    border:     active ? '1px solid #ec4899' : '1px solid #1e1e24',
+    border: active ? '1px solid #ec4899' : '1px solid #1e1e24',
     background: active ? 'rgba(236,72,153,0.1)' : '#18181f',
-    color:      active ? '#f472b6' : '#6b6b7a',
+    color: active ? '#f472b6' : '#6b6b7a',
     cursor: 'pointer',
     transition: 'all 0.15s',
   });
@@ -73,7 +176,6 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-8">
-
       {/* ── Header ── */}
       <div className="flex items-start justify-between">
         <div>
@@ -86,13 +188,11 @@ export default function DashboardPage() {
         </div>
 
         <div className="flex items-center gap-3">
-
           {/* ── User Profile Card ── */}
           <div
             className="flex items-center gap-3 rounded-xl px-4 py-2.5"
             style={{ background: '#111115', border: '1px solid #1e1e24' }}
           >
-            {/* Avatar — profile picture if available, else initials */}
             {user.profileImage ? (
               <img
                 src={user.profileImage}
@@ -116,7 +216,6 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {/* Name + Email */}
             <div className="flex flex-col" style={{ lineHeight: 1 }}>
               <span className="font-semibold" style={{ color: '#e0e0e8', fontSize: '13px' }}>
                 {user.name}
@@ -177,16 +276,16 @@ export default function DashboardPage() {
 
       {/* ── Stats ── */}
       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-        <StatCard label="Total Registered" value={MOCK_WORKSHOPS.length} accent="#f472b6" sub="Across all workshops"
+        <StatCard label="Total Registered" value={stats.totalRegistered} accent="#f472b6" sub="Across all workshops"
           icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>}
         />
-        <StatCard label="Attended" value={attended} accent="#a78bfa" sub="Workshops completed"
+        <StatCard label="Attended" value={stats.attended} accent="#a78bfa" sub="Workshops completed"
           icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
         />
-        <StatCard label="Upcoming" value={registered} accent="#60a5fa" sub="Slots confirmed"
+        <StatCard label="Upcoming" value={stats.upcoming} accent="#60a5fa" sub="Slots confirmed"
           icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>}
         />
-        <StatCard label="Certificates" value={certified.length} accent="#34d399" sub="Ready to download"
+        <StatCard label="Certificates" value={stats.certificates} accent="#34d399" sub="Ready to download"
           icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="6" /><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11" /></svg>}
         />
       </div>
@@ -244,7 +343,7 @@ export default function DashboardPage() {
             ) : (
               filtered.map((w, i) => (
                 <div
-                  key={w.id}
+                  key={`workshop-${w.id}-${i}`}
                   className="grid items-center px-5 py-4 transition-colors hover:bg-white/[0.02]"
                   style={{
                     gridTemplateColumns: '2fr 1fr 1fr 1fr 80px',
@@ -285,8 +384,8 @@ export default function DashboardPage() {
               </div>
             ) : (
               <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))' }}>
-                {certified.map((w) => (
-                  <div key={w.id} className="rounded-xl p-5 flex flex-col gap-4 relative overflow-hidden" style={{ background: '#111115', border: '1px solid #1e1e24' }}>
+                {certified.map((w, idx) => (
+                  <div key={`cert-${w.id}-${w.certificateId}-${idx}`} className="rounded-xl p-5 flex flex-col gap-4 relative overflow-hidden" style={{ background: '#111115', border: '1px solid #1e1e24' }}>
                     <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: 'linear-gradient(90deg, #34d399, #10b981)' }} />
                     <div className="flex items-start justify-between">
                       <div className="rounded-lg flex items-center justify-center" style={{ width: '40px', height: '40px', background: 'rgba(52,211,153,0.08)', color: '#34d399' }}>
@@ -305,7 +404,7 @@ export default function DashboardPage() {
                       </p>
                     </div>
                     <div className="flex gap-2 pt-1" style={{ borderTop: '1px solid #1a1a20' }}>
-                      <button className="flex-1 flex items-center justify-center gap-2 text-xs font-medium rounded-lg py-2" style={{ background: 'rgba(52,211,153,0.08)', color: '#34d399', border: '1px solid rgba(52,211,153,0.2)' }}>
+                      <button className="flex-1 flex items-center justify-center gap-2 text-xs font-medium rounded-lg py-2" style={{ background: 'rgba(52,211,153,0.08)', color: '#34d399', border: 'none' }}>
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
                         </svg>
