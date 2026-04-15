@@ -1,17 +1,11 @@
-// backend/src/middleware/adminMiddleware.ts
 import { Request, Response, NextFunction } from 'express';
 import { verifyToken } from '../utils/jwt';
 import { sendError } from '../utils/helpers';
 import { prisma } from '../index';
 import { isAdminEmail } from '../config/adminWhitelist';
 
-export interface AdminRequest extends Request {
-  userId?: string;
-  user?: any;
-}
-
 export const adminMiddleware = async (
-  req: AdminRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
@@ -55,8 +49,9 @@ export const adminMiddleware = async (
 
     console.log('✅ Admin access granted for:', user.email);
 
-    req.userId = user.id;
-    req.user = user;
+    // Attach userId and user to request
+    (req as any).userId = user.id;
+    (req as any).user = user;
     next();
   } catch (error: any) {
     console.error('Admin middleware error:', error);
