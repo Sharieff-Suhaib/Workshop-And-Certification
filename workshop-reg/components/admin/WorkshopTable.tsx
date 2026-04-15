@@ -48,11 +48,17 @@ export default function WorkshopTable({
                   {workshop.title}
                 </td>
                 <td className="px-6 py-4 text-gray-400">
-                  {workshop.date || '-'}
+                  {workshop.date ? new Date(workshop.date).toLocaleDateString() : '-'}
                 </td>
                 <td className="px-6 py-4 text-gray-400">
+                  {workshop.date ? new Date(workshop.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
+                </td>
+                {/* 
+                  <td className="px-6 py-4 text-gray-400">
                   {workshop.time || '-'}
                 </td>
+                 */}
+                
                 <td className="px-6 py-4 text-gray-400">
                   {workshop.location || '-'}
                 </td>

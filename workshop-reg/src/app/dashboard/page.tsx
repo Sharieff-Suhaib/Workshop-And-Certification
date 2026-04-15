@@ -15,34 +15,37 @@ const MOCK_WORKSHOPS = [
   { id: '5', title: 'DevOps & CI/CD Pipelines',          category: 'Technical',     date: '2026-03-28', time: '9:00 AM',  status: 'Certified',  certificateId: 'CERT-2026-0029' },
 ];
 
+// Derives initials from a full name — "Kula Sekaran" → "KS"
+function getInitials(name: string): string {
+  return name
+    .trim()
+    .split(/\s+/)
+    .map((n) => n[0]?.toUpperCase() ?? '')
+    .slice(0, 2)
+    .join('');
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const { user, token, logout } = useAuthStore();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-
-  // ── All hooks first, before any conditional return ──
   const [statusFilter,   setStatusFilter]   = useState('All');
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [activeTab,      setActiveTab]      = useState<'workshops' | 'certificates'>('workshops');
 
   useEffect(() => {
     if (!user || !token) {
-      console.log('❌ No user or token - redirecting to login');
       router.push('/auth/login');
     }
   }, [user, token, router]);
 
-  // ── Logout Handler ──
   const handleLogout = () => {
     logout();
     setShowLogoutConfirm(false);
     router.push('/auth/login');
   };
 
-  // ── Conditional return AFTER all hooks ──
   if (!user || !token) return null;
-
-  console.log('✅ User authenticated:', user.email);
 
   const certified  = MOCK_WORKSHOPS.filter((w) => w.status === 'Certified');
   const attended   = MOCK_WORKSHOPS.filter((w) => w.status === 'Attended').length;
@@ -66,6 +69,8 @@ export default function DashboardPage() {
     transition: 'all 0.15s',
   });
 
+  const initials = getInitials(user.name);
+
   return (
     <div className="flex flex-col gap-8">
 
@@ -73,28 +78,56 @@ export default function DashboardPage() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="font-bold text-white" style={{ fontSize: '24px', letterSpacing: '-0.02em' }}>
-            Welcome back, {user.name}👋
+            Welcome back, {user.name} 👋
           </h1>
           <p style={{ color: '#6b6b7a', fontSize: '14px', marginTop: '4px' }}>
             Here&apos;s what&apos;s happening with your workshops
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <button
-            className="flex items-center gap-2 rounded-lg font-medium text-sm px-4 py-2"
-            style={{
-              background: 'linear-gradient(135deg, #f472b6, #ec4899)',
-              color: 'white',
-              boxShadow: '0 0 20px rgba(244,114,182,0.25)',
-            }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            Browse Workshops
-          </button>
 
-          {/* Logout Button */}
+        <div className="flex items-center gap-3">
+
+          {/* ── User Profile Card ── */}
+          <div
+            className="flex items-center gap-3 rounded-xl px-4 py-2.5"
+            style={{ background: '#111115', border: '1px solid #1e1e24' }}
+          >
+            {/* Avatar — profile picture if available, else initials */}
+            {user.profileImage ? (
+              <img
+                src={user.profileImage}
+                alt={user.name}
+                className="rounded-full object-cover flex-shrink-0"
+                style={{ width: '38px', height: '38px' }}
+              />
+            ) : (
+              <div
+                className="rounded-full flex items-center justify-center font-bold flex-shrink-0"
+                style={{
+                  width: '38px',
+                  height: '38px',
+                  background: 'linear-gradient(135deg, #f472b6, #ec4899)',
+                  color: 'white',
+                  fontSize: '13px',
+                  boxShadow: '0 0 14px rgba(244,114,182,0.25)',
+                }}
+              >
+                {initials}
+              </div>
+            )}
+
+            {/* Name + Email */}
+            <div className="flex flex-col" style={{ lineHeight: 1 }}>
+              <span className="font-semibold" style={{ color: '#e0e0e8', fontSize: '13px' }}>
+                {user.name}
+              </span>
+              <span style={{ color: '#4b4b58', fontSize: '11px', marginTop: '3px' }}>
+                {user.email}
+              </span>
+            </div>
+          </div>
+
+          {/* ── Logout Button ── */}
           <button
             onClick={() => setShowLogoutConfirm(true)}
             className="flex items-center gap-2 rounded-lg font-medium text-sm px-4 py-2"
@@ -103,10 +136,11 @@ export default function DashboardPage() {
               color: '#ef4444',
               border: '1px solid rgba(239, 68, 68, 0.3)',
             }}
-            title="Sign out"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" />
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
             </svg>
             Logout
           </button>
@@ -119,28 +153,20 @@ export default function DashboardPage() {
           <div className="rounded-lg p-6" style={{ background: '#1a1a2e', border: '1px solid #ec4899', maxWidth: '400px', width: '90%' }}>
             <h2 className="text-lg font-bold text-white mb-2">Sign Out</h2>
             <p style={{ color: '#6b6b7a', marginBottom: '20px' }}>
-              Are you sure you want to sign out? You'll need to sign in again to access your account.
+              Are you sure you want to sign out? You&apos;ll need to sign in again to access your account.
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowLogoutConfirm(false)}
-                className="flex-1 rounded-lg font-medium py-2 px-4 transition"
-                style={{
-                  background: '#18181f',
-                  color: '#6b6b7a',
-                  border: '1px solid #1e1e24',
-                }}
+                className="flex-1 rounded-lg font-medium py-2 px-4"
+                style={{ background: '#18181f', color: '#6b6b7a', border: '1px solid #1e1e24' }}
               >
                 Cancel
               </button>
               <button
                 onClick={handleLogout}
-                className="flex-1 rounded-lg font-medium py-2 px-4 transition"
-                style={{
-                  background: 'linear-gradient(135deg, #ef4444, #dc2626)',
-                  color: 'white',
-                  border: 'none',
-                }}
+                className="flex-1 rounded-lg font-medium py-2 px-4"
+                style={{ background: 'linear-gradient(135deg, #ef4444, #dc2626)', color: 'white', border: 'none' }}
               >
                 Sign Out
               </button>

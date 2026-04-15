@@ -54,14 +54,43 @@ export function AdminAuthCallback() {
   }, [searchParams, router, setAdminData]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
+  <div className="min-h-screen flex items-center justify-center bg-[#09090b]">
+    {/* Subtle Ambient Glow to match dashboard depth */}
+    <div className="absolute top-1/3 -left-20 w-96 h-96 bg-pink-600/5 rounded-full blur-[120px]" />
+    <div className="absolute bottom-1/3 -right-20 w-96 h-96 bg-pink-900/10 rounded-full blur-[120px]" />
+
+    {/* Structured Admin Auth Card */}
+    <div className="relative z-10 w-full max-w-md p-12 bg-[#121214] border border-white/5 rounded-2xl shadow-2xl">
+      
+      {/* Top Accent Line - matching the dashboard's pink highlights */}
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-pink-500 to-rose-600" />
+
       <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-        <p className="text-white text-lg font-semibold">
+        {/* Custom Pink Spinner */}
+        <div className="relative w-14 h-14 mx-auto mb-6">
+          <div className="absolute inset-0 rounded-full border-2 border-pink-500/10" />
+          <div className="absolute inset-0 rounded-full border-t-2 border-pink-500 animate-spin" />
+        </div>
+
+        <h2 className="text-white text-xl font-semibold tracking-tight">
           Verifying admin credentials...
+        </h2>
+        
+        <p className="text-zinc-500 mt-3 text-sm leading-relaxed">
+          Please wait while we authenticate your <br />
+          <span className="text-pink-500/80 font-medium">Secure Administrative Session</span>
         </p>
-        <p className="text-slate-400 mt-2">Please wait while we authenticate you</p>
+
+        {/* Subtle Branding Link to the CTF project */}
+        <div className="mt-10 flex items-center justify-center gap-2 opacity-40">
+           <div className="w-1.5 h-1.5 rounded-full bg-pink-500" />
+           <span className="text-[10px] text-white uppercase tracking-[0.2em] font-bold">
+             TechOps SD Task
+           </span>
+           <div className="w-1.5 h-1.5 rounded-full bg-pink-500" />
+        </div>
       </div>
     </div>
-  );
+  </div>
+);
 }
