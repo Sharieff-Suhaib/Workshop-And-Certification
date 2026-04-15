@@ -40,24 +40,28 @@ export default function EditWorkshopModal({
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (workshop) {
-      setFormData({
-        title: workshop.title || '',
-        description: workshop.description || '',
-        date: workshop.date || '',
-        time: workshop.time || '',
-        location: workshop.location || '',
-        capacity: workshop.capacity?.toString() || '',
-      });
-    }
-  }, [workshop, isOpen]);
+  if (workshop) {
+    const dateObj = workshop.date ? new Date(workshop.date) : null;
+
+    setFormData({
+      title: workshop.title || '',
+      description: workshop.description || '',
+      date: dateObj ? dateObj.toISOString().split('T')[0] : '',
+      time: dateObj
+        ? dateObj.toTimeString().slice(0, 5)
+        : '',
+      location: workshop.location || '',
+      capacity: workshop.capacity?.toString() || '',
+    });
+  }
+}, [workshop, isOpen]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
     setLoading(true);
@@ -82,9 +86,9 @@ export default function EditWorkshopModal({
 
       alert('Workshop updated successfully');
       onSuccess();
-    } catch (err: any) {
-      setError(err.message || 'Error updating workshop');
-    } finally {
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error updating workshop');
+    }finally {
       setLoading(false);
     }
   };

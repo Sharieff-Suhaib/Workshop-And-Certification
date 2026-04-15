@@ -43,6 +43,7 @@ model Workshop {
   category    String   @default("Technical")
   date        DateTime
   time        String
+  location    String? 
   capacity    Int?
   createdAt   DateTime @default(now())
   certificates Certificate[]

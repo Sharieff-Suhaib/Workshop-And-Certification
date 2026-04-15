@@ -52,8 +52,8 @@ export class AdminController {
   // ============ UPDATE USER ROLE ============
   static updateUserRole = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = Array.isArray(req.params.userId) 
-        ? req.params.userId[0] 
+      const userId = Array.isArray(req.params.userId)
+        ? req.params.userId[0]
         : req.params.userId;
       const { role } = req.body;
 
@@ -90,8 +90,8 @@ export class AdminController {
   // ============ DELETE USER ============
   static deleteUser = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = Array.isArray(req.params.userId) 
-        ? req.params.userId[0] 
+      const userId = Array.isArray(req.params.userId)
+        ? req.params.userId[0]
         : req.params.userId;
 
       if (!userId) {
@@ -130,22 +130,10 @@ export class AdminController {
   static getWorkshops = async (req: Request, res: Response): Promise<void> => {
     try {
       const workshops = await prisma.workshop.findMany({
-        orderBy: { title: 'asc' },
+        orderBy: { createdAt: 'desc' },
       });
 
-      const normalized = workshops.map((workshop) => ({
-        id: workshop.id,
-        title: workshop.title,
-        description: null,
-        date: null,
-        time: null,
-        location: null,
-        capacity: null,
-        registrations: 0,
-        createdAt: new Date().toISOString(),
-      }));
-
-      sendSuccess(res, 200, { workshops: normalized });
+      sendSuccess(res, 200, { workshops, total: workshops.length });
     } catch (error: any) {
       console.error('❌ Get workshops error:', error);
       sendError(res, 500, error.message);
@@ -155,37 +143,36 @@ export class AdminController {
   // ============ CREATE WORKSHOP ============
   static createWorkshop = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { title } = req.body;
+      const { title, description, category, date, time, location, capacity } = req.body;
 
       if (!title || typeof title !== 'string' || !title.trim()) {
         sendError(res, 400, 'Workshop title is required');
         return;
       }
 
+      if (!date) {
+        sendError(res, 400, 'Workshop date is required');
+        return;
+      }
+
+      if (!time) {
+        sendError(res, 400, 'Workshop time is required');
+        return;
+      }
+
       const workshop = await prisma.workshop.create({
         data: {
           title: title.trim(),
+          description: description || null,
+          category: category || 'Technical',
+          date: new Date(`${date}T${time}:00`),
+          time: time,                               // ✅ pass time separately
+          location: location || null,
+          capacity: capacity ? parseInt(capacity) : null,
         },
       });
 
-      sendSuccess(
-        res,
-        201,
-        {
-          workshop: {
-            id: workshop.id,
-            title: workshop.title,
-            description: null,
-            date: null,
-            time: null,
-            location: null,
-            capacity: null,
-            registrations: 0,
-            createdAt: new Date().toISOString(),
-          },
-        },
-        'Workshop created successfully'
-      );
+      sendSuccess(res, 201, { workshop }, 'Workshop created successfully');
     } catch (error: any) {
       console.error('❌ Create workshop error:', error);
       sendError(res, 500, error.message);
@@ -198,7 +185,7 @@ export class AdminController {
       const workshopId = Array.isArray(req.params.workshopId)
         ? req.params.workshopId[0]
         : req.params.workshopId;
-      const { title } = req.body;
+      const { title, description, category, date, time, location, capacity } = req.body;
 
       if (!workshopId) {
         sendError(res, 400, 'Workshop ID is required');
@@ -210,29 +197,25 @@ export class AdminController {
         return;
       }
 
+      if (!time) {
+        sendError(res, 400, 'Workshop time is required');
+        return;
+      }
+
       const workshop = await prisma.workshop.update({
         where: { id: workshopId },
-        data: { title: title.trim() },
+        data: {
+          title: title.trim(),
+          description: description || null,
+          category: category || 'Technical',
+          date: new Date(`${date}T${time}:00`),
+          time: time,                               // ✅ pass time separately
+          location: location || null,
+          capacity: capacity ? parseInt(capacity) : null,
+        },
       });
 
-      sendSuccess(
-        res,
-        200,
-        {
-          workshop: {
-            id: workshop.id,
-            title: workshop.title,
-            description: null,
-            date: null,
-            time: null,
-            location: null,
-            capacity: null,
-            registrations: 0,
-            createdAt: new Date().toISOString(),
-          },
-        },
-        'Workshop updated successfully'
-      );
+      sendSuccess(res, 200, { workshop }, 'Workshop updated successfully');
     } catch (error: any) {
       console.error('❌ Update workshop error:', error);
       sendError(res, 500, error.message);

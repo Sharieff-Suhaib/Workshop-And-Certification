@@ -65,9 +65,9 @@ export default function CreateWorkshopModal({
       });
       alert('Workshop created successfully');
       onSuccess();
-    } catch (err: any) {
-      setError(err.message || 'Error creating workshop');
-    } finally {
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error creating workshop');
+    }finally {
       setLoading(false);
     }
   };
